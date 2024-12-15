@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redbox Database</title>
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Redbox Database" />
+    <meta property="og:description" content="Explore a database of stores that at one time hosted a Redbox machine, along with the default product catalog of movies and games." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://findaredbox.kbots.tech/" />
+    <meta property="og:site_name" content="Find A Redbox" />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Redbox Database" />
+    <meta name="twitter:description" content="Explore a database of stores that at one time hosted a Redbox machine, along with the default product catalog of movies and games." />
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <style>
+        /* General styling for page, form, table, and modal */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #d9232e;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        form {
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 800px;
+            border: 2px solid #d9232e;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        label {
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        input[type="text"],
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 150px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #d9232e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            align-self: center;
+        }
+
+        button:hover {
+            background-color: #b51f26;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            max-width: 1000px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #d9232e;
+            color: white;
+            font-size: 1.1em;
+            text-transform: uppercase;
+        }
+
+        td {
+            font-size: 0.95em;
+        }
+
+        a {
+            color: #d9232e;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            background-color: #f1f1f1;
+            color: #333;
+            text-align: center;
+            padding: 10px;
+            margin-top: auto;
+            border-top: 1px solid #ddd;
+        }
+
+        footer a {
+            color: #d9232e;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        .modal-content input,
+        .modal-content select {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .modal-content button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Kiosk Search</h1>
+        <nav>
+            <a href="/">Kiosks</a>
+            <a href="/map.html">Kiosk Map</a>
+            <a href="/products.html">Products</a>
+            <a href="/about.html">About</a>
+        </nav>
+    </header>
+    <form id="searchForm">
+        <div class="form-group">
+            <label for="state">State:</label>
+            <input type="text" id="state" name="state" placeholder="e.g., PA">
+        </div>
+        <div class="form-group">
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" placeholder="e.g., Allentown">
+        </div>
+        <div class="form-group">
+            <label for="county">County:</label>
+            <input type="text" id="county" name="county" placeholder="e.g., Lehigh County">
+        </div>
+        <div class="form-group">
+            <label for="market_name">Market Name:</label>
+            <input type="text" id="market_name" name="market_name" placeholder="e.g., Philadelphia">
+        </div>
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+                <option value="">All</option>
+                <option value="Operational">Operational</option>
+                <option value="Error (See notes for error code)">Error (See notes for error code)</option>
+                <option value="Turned Off">Turned Off</option>
+                <option value="Removed">Removed</option>
+                <option value="Never Existed">Never Existed</option>
+            </select>
+        </div>
+        <button type="submit">Search</button>
+    </form>
+
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Open Date</th>
+                <th>Address</th>
+                <th>Banner Name</th>
+                <th>Market Name</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Results will be appended here -->
+        </tbody>
+    </table>
+
+    <!-- Modal for editing store details -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Store Details</h3>
+            <form id="editForm">
+                <label for="editStatus">Status:</label>
+                <select id="editStatus">
+                    <option value="Operational">Operational</option>
+                    <option value="Error (See notes for error code)">Error (See notes for error code)</option>
+                    <option value="Turned Off">Turned Off</option>
+                    <option value="Removed">Removed</option>
+                    <option value="Never Existed">Never Existed</option>
+                </select>
+                <label for="editNotes">Notes:</label>
+                <input type="text" id="editNotes">
+                <button type="button" id="saveChangesButton">Save Changes</button>
+                <button type="button" id="closeModalButton">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        Special thanks to @codeHusky in the Redbox Tinkering
+        Discord for the JSON file used to make this store database.
+    </footer>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
+        const editModal = document.getElementById('editModal');
+        const editStatus = document.getElementById('editStatus');
+        const editNotes = document.getElementById('editNotes');
+        const saveChangesButton = document.getElementById('saveChangesButton');
+        const closeModalButton = document.getElementById('closeModalButton');
+    
+        let currentEditId = null;
+    
+        // Function to load filters from URL parameters
+        function loadFiltersFromURL() {
+            const params = new URLSearchParams(window.location.search);
+    
+            // Update input fields with the query parameter values
+            document.getElementById('state').value = params.get('state') || '';
+            document.getElementById('city').value = params.get('city') || '';
+            document.getElementById('county').value = params.get('county') || '';
+            document.getElementById('market_name').value = params.get('market_name') || '';
+            document.getElementById('status').value = params.get('status') || '';
+        }
+    
+        // Save filters to the URL
+        function updateURLWithFilters() {
+            const state = document.getElementById('state').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const county = document.getElementById('county').value.trim();
+            const market_name = document.getElementById('market_name').value.trim();
+            const status = document.getElementById('status').value.trim();
+    
+            const params = new URLSearchParams();
+            if (state) params.append('state', state);
+            if (city) params.append('city', city);
+            if (county) params.append('county', county);
+            if (market_name) params.append('market_name', market_name);
+            if (status) params.append('status', status);
+    
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        }
+    
+        // Function to check if only "status" is filled or no filters are provided
+        function shouldSkipQuery() {
+            const state = document.getElementById('state').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const county = document.getElementById('county').value.trim();
+            const market_name = document.getElementById('market_name').value.trim();
+            const status = document.getElementById('status').value.trim();
+    
+            // Check if no meaningful filters are provided
+            if (!state && !city && !county && !market_name && !status) {
+                resultsTable.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Please provide search filters.</td></tr>`;
+                return true;
+            }
+    
+            // Check if only "status" is filled
+            if (status && !state && !city && !county && !market_name) {
+                resultsTable.innerHTML = `<tr><td colspan="7" style="text-align: center; color: red;">Please provide at least one additional search filter besides "Status".</td></tr>`;
+                return true;
+            }
+    
+            return false;
+        }
+    
+        searchForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+    
+            updateURLWithFilters();
+    
+            // Skip fetch if no filters or only "status" is filled
+            if (shouldSkipQuery()) return;
+    
+            const state = document.getElementById('state').value.trim();
+            const city = document.getElementById('city').value.trim();
+            const county = document.getElementById('county').value.trim();
+            const market_name = document.getElementById('market_name').value.trim();
+            const status = document.getElementById('status').value.trim();
+    
+            const params = new URLSearchParams();
+            if (state) params.append('state', state);
+            if (city) params.append('city', city);
+            if (county) params.append('county', county);
+            if (market_name) params.append('market_name', market_name);
+            if (status) params.append('status', status);
+    
+            try {
+                const response = await fetch(`/search?${params.toString()}`);
+                const data = await response.json();
+    
+                resultsTable.innerHTML = '';
+    
+                data.forEach((store) => {
+                    const row = document.createElement('tr');
+                    const openDate = new Date(store.open_date).toLocaleDateString();
+                    row.innerHTML += `<td>${openDate}</td>`;
+                    row.innerHTML += `<td><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.address)}" target="_blank">${store.address}</a></td>`;
+                    row.innerHTML += `<td>${store.banner_name || 'N/A'}</td>`;
+                    row.innerHTML += `<td>${store.market_name || 'N/A'}</td>`;
+                    row.innerHTML += `<td>${store.status || 'Unknown'}</td>`;
+                    row.innerHTML += `<td>${store.notes || ''}</td>`;
+                    row.innerHTML += `<td><button onclick="openEditModal('${store.id}', '${store.status}', '${store.notes || ''}')">Edit</button></td>`;
+                    resultsTable.appendChild(row);
+                });
+    
+                if (data.length === 0) {
+                    const noResultsRow = document.createElement('tr');
+                    noResultsRow.innerHTML = `<td colspan="7" style="text-align: center;">No results found.</td>`;
+                    resultsTable.appendChild(noResultsRow);
+                }
+            } catch (err) {
+                console.error('Error fetching search results:', err);
+                alert('Error fetching search results. Please try again later.');
+            }
+        });
+    
+        function decodeHTML(html) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = html;
+            return textarea.value;
+        }
+    
+        function openEditModal(id, currentStatus, currentNotes) {
+            currentEditId = id;
+    
+            // Decode HTML entities for safe editing
+            editStatus.value = currentStatus;
+            editNotes.value = decodeHTML(currentNotes);
+    
+            editModal.style.display = 'block';
+        }
+    
+        closeModalButton.addEventListener('click', () => {
+            editModal.style.display = 'none';
+            currentEditId = null;
+        });
+    
+        saveChangesButton.addEventListener('click', async () => {
+            const newStatus = editStatus.value;
+            const newNotes = editNotes.value;
+    
+            try {
+                const response = await fetch('/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: currentEditId, status: newStatus, notes: newNotes }),
+                });
+    
+                if (response.ok) {
+                    alert('Store updated successfully!');
+                    editModal.style.display = 'none';
+                    currentEditId = null;
+                    searchForm.dispatchEvent(new Event('submit')); // Refresh the results
+                } else {
+                    const result = await response.json();
+                    alert(`Failed to update store: ${result.error}`);
+                }
+            } catch (err) {
+                console.error('Error updating store:', err);
+                alert('Error updating store. Please try again later.');
+            }
+        });
+    
+        // Load filters on page load
+        loadFiltersFromURL();
+    
+        // Trigger search only if meaningful filters are applied
+        if (!shouldSkipQuery()) {
+            searchForm.dispatchEvent(new Event('submit')); // Trigger initial search with persisted filters
+        }
+    </script>
+    
+    
+    
+    
+    
+</body>
+
+</html>

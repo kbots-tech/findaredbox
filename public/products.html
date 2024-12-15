@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redbox Database</title>
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Redbox Database" />
+    <meta property="og:description"
+        content="Explore a database of stores that at one time hosted a Redbox machine, along with the default product catalog of movies and games." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://findaredbox.kbots.tech/" />
+    <meta property="og:site_name" content="Find A Redbox" />
+
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Redbox Database" />
+    <meta name="twitter:description"
+        content="Explore a database of stores that at one time hosted a Redbox machine, along with the default product catalog of movies and games." />
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <style>
+        /* General styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+    
+        header {
+            background-color: #d9232e;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+    
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    
+        nav {
+            display: flex;
+            gap: 20px;
+        }
+    
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1em;
+        }
+    
+        nav a:hover {
+            text-decoration: underline;
+        }
+    
+        form {
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 800px;
+            border: 2px solid #d9232e;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+    
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 180px;
+        }
+    
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+    
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+    
+        button {
+            padding: 10px 20px;
+            background-color: #d9232e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            align-self: center;
+        }
+    
+        button:hover {
+            background-color: #b51f26;
+        }
+    
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+    
+        th {
+            background-color: #d9232e;
+            color: white;
+        }
+    
+        td a {
+            color: #d9232e;
+            text-decoration: none;
+        }
+    
+        td a:hover {
+            text-decoration: underline;
+        }
+    
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center; /* Center modal horizontally */
+            align-items: center; /* Center modal vertically */
+            overflow: hidden;
+        }
+    
+        .modal-content {
+            display: flex;
+            flex-direction: row; /* Side-by-side layout for text and image */
+            align-items: center; /* Center content vertically */
+            gap: 20px; /* Space between text and image */
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 80%;
+            max-height: 80vh;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: auto;
+        }
+    
+        .modal-content .modal-text {
+            flex: 2; /* Text takes up 2/3 of the modal */
+            overflow-y: auto;
+        }
+    
+        .modal-content img {
+            flex: 1; /* Image takes up 1/3 of the modal */
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            align-self: center; /* Ensure image is centered vertically */
+        }
+    
+        .modal-content .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            color: #d9232e;
+        }
+    
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+    
+
+</head>
+
+<body>
+    <header>
+        <h1>Disk Search</h1>
+        <nav>
+            <a href="/">Kiosks</a>
+            <a href="/map.html">Kiosk Map</a>
+            <a href="/products.html">Products</a>
+            <a href="/about.html">About</a>
+        </nav>
+    </header>
+    <form id="searchForm">
+        <div class="form-group">
+            <label for="product_id">Product ID:</label>
+            <input type="text" id="product_id" name="product_id" placeholder="e.g., 1000">
+        </div>
+        <div class="form-group">
+            <label for="starring">Starring:</label>
+            <input type="text" id="starring" name="starring" placeholder="e.g., Animated">
+        </div>
+        <div class="form-group">
+            <label for="long_name">Title:</label>
+            <input type="text" id="long_name" name="long_name" placeholder="e.g., The Grinch">
+        </div>
+        <div class="form-group">
+            <label for="genres">Genres:</label>
+            <input type="text" id="genres" name="genres" placeholder="e.g., 1013">
+        </div>
+        <div class="form-group">
+            <label for="studio">Studio:</label>
+            <input type="text" id="studio" name="studio" placeholder="e.g., Lionsgate">
+        </div>
+        <div class="form-group">
+            <label for="release_year">Year:</label>
+            <input type="text" id="release_year" name="release_year" placeholder="e.g., 2007">
+        </div>
+        <button type="submit">Search</button>
+    </form>
+
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Title</th>
+                <th>Release Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Results will be appended here -->
+        </tbody>
+    </table>
+
+    <!-- Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-text">
+                <span class="close">&times;</span>
+                <h2 id="movieTitle"></h2>
+                <p id="movieDescription"></p>
+                <p><strong>Genres:</strong> <span id="movieGenres"></span></p>
+                <p><strong>Starring:</strong> <span id="movieStarring"></span></p>
+                <p><strong>Running Time:</strong> <span id="movieRunningTime"></span></p>
+                <p><strong>Product Type:</strong> <span id="movieProductType"></span></p>
+                <p><strong>Rating:</strong> <span id="movieRating"></span></p>
+                <p><strong>Box Office Gross:</strong> $<span id="movieBoxOfficeGross"></span></p>
+                <p><strong>Closed Captioned:</strong> <span id="movieClosedCaptioned"></span></p>
+                <p><strong>Sell Thru:</strong> <span id="movieSellThru"></span></p>
+                <p><strong>Studio:</strong> <span id="movieStudio"></span></p>
+                <p><strong>Release Date:</strong> <span id="movieReleaseDate"></span></p>
+            </div>
+            <img id="moviePoster" alt="Movie Poster">
+        </div>
+
+        <footer>
+            Special thanks to @puyo in the Redbox Tinkering
+            Discord for the JSON file used to make this product database.
+        </footer>
+    </div>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const resultsTable = document.getElementById('resultsTable').querySelector('tbody');
+        const movieModal = document.getElementById('movieModal');
+        const closeModalButton = document.querySelector('.modal .close');
+        const moviePoster = document.getElementById('moviePoster');
+        const movieTitle = document.getElementById('movieTitle');
+        const movieDescription = document.getElementById('movieDescription');
+        const movieGenres = document.getElementById('movieGenres');
+        const movieStarring = document.getElementById('movieStarring');
+        const movieRunningTime = document.getElementById('movieRunningTime');
+        const movieProductType = document.getElementById('movieProductType');
+        const movieRating = document.getElementById('movieRating');
+        const movieBoxOfficeGross = document.getElementById('movieBoxOfficeGross');
+        const movieClosedCaptioned = document.getElementById('movieClosedCaptioned');
+        const movieSellThru = document.getElementById('movieSellThru');
+        const movieStudio = document.getElementById('movieStudio');
+        const movieReleaseDate = document.getElementById('movieReleaseDate');
+
+        searchForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const params = new URLSearchParams(new FormData(searchForm));
+
+            try {
+                const response = await fetch(`/movies?${params.toString()}`);
+                const data = await response.json();
+
+                resultsTable.innerHTML = '';
+
+                data.forEach((movie) => {
+                    const row = document.createElement('tr');
+
+                    const productIdCell = document.createElement('td');
+                    productIdCell.textContent = movie.product_id;
+                    row.appendChild(productIdCell);
+
+                    const titleCell = document.createElement('td');
+                    const titleLink = document.createElement('a');
+                    titleLink.href = '#';
+                    titleLink.textContent = movie.long_name;
+                    titleLink.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        openMovieModal(
+                            movie.product_id,
+                            movie.long_name,
+                            movie.description || '',
+                            JSON.stringify(movie.genres) || '{}',
+                            movie.starring || [],
+                            movie.running_time || 'N/A',
+                            movie.product_type_id || 'N/A',
+                            movie.rating_id || 'N/A',
+                            movie.box_office_gross || 'N/A',
+                            movie.closed_captioned,
+                            movie.sell_thru,
+                            movie.studio || 'N/A',
+                            new Date(movie.release_date).toLocaleDateString(),
+                            movie.image_file || ''
+                        );
+                    });
+                    titleCell.appendChild(titleLink);
+                    row.appendChild(titleCell);
+
+                    const releaseDateCell = document.createElement('td');
+                    releaseDateCell.textContent = new Date(movie.release_date).toLocaleDateString();
+                    row.appendChild(releaseDateCell);
+
+                    resultsTable.appendChild(row);
+                });
+
+                if (data.length === 0) {
+                    resultsTable.innerHTML = '<tr><td colspan="3" style="text-align: center;">No results found.</td></tr>';
+                }
+            } catch (err) {
+                console.error('Error fetching search results:', err);
+                alert('Error fetching search results. Please try again later.');
+            }
+        });
+
+        function openMovieModal(
+            product_id,
+            title,
+            description,
+            genres,
+            starring,
+            running_time,
+            product_type_id,
+            rating_id,
+            box_office_gross,
+            closed_captioned,
+            sell_thru,
+            studio,
+            releaseDate,
+            imageFile
+        ) {
+            movieTitle.textContent = `${title || 'N/A'} (ID: ${product_id || 'N/A'})`;
+            movieDescription.innerHTML = (description || 'No description available').replace(/\\r\\n/g, '<br>').replace(/\\/g, '');
+            movieGenres.textContent = genres
+                ? Object.keys(JSON.parse(genres)).join(', ')
+                : 'No genres available';
+            movieStarring.textContent = Array.isArray(starring) ? starring.join(', ') : 'No cast information available';
+            movieRunningTime.textContent = running_time || 'N/A';
+            movieProductType.textContent = product_type_id || 'N/A';
+            movieRating.textContent = rating_id || 'N/A';
+            movieBoxOfficeGross.textContent = box_office_gross !== null ? `$${box_office_gross}` : 'N/A';
+            movieClosedCaptioned.textContent = closed_captioned ? 'Yes' : 'No';
+            movieSellThru.textContent = sell_thru ? 'Yes' : 'No';
+            movieStudio.textContent = studio || 'N/A';
+            movieReleaseDate.textContent = releaseDate || 'N/A';
+
+            moviePoster.src = imageFile ? `/disks-images/${imageFile}` : '/path/to/default-poster.jpg';
+            moviePoster.alt = title || 'Movie Poster';
+
+            movieModal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        closeModalButton.addEventListener('click', () => {
+            movieModal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === movieModal) {
+                movieModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redbox Store Locator</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f8f8;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #d9232e;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.8em;
+            text-transform: uppercase;
+        }
+
+        nav {
+            display: flex;
+            gap: 15px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        form {
+            margin: 20px auto;
+            padding: 15px;
+            max-width: 800px;
+            border: 2px solid #d9232e;
+            background-color: white;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #d9232e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: #b51f26;
+        }
+
+        #map {
+            width: 100%;
+            height: 70vh;
+            margin-top: 20px;
+        }
+
+        footer {
+            background-color: #f1f1f1;
+            text-align: center;
+            padding: 10px;
+            margin-top: auto;
+            border-top: 1px solid #ddd;
+        }
+
+        footer a {
+            color: #d9232e;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Redbox Kiosk Locator</h1>
+        <nav>
+            <a href="/">Kiosks</a>
+            <a href="/map.html">Kiosk Map</a>
+            <a href="/products.html">Products</a>
+            <a href="/about.html">About</a>
+        </nav>
+    </header>
+
+    <form id="searchForm">
+        <div class="form-group">
+            <label for="state">State:</label>
+            <input type="text" id="state" name="state" placeholder="e.g., PA">
+        </div>
+        <div class="form-group">
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" placeholder="e.g., Allentown">
+        </div>
+        <div class="form-group">
+            <label for="county">County:</label>
+            <input type="text" id="county" name="county" placeholder="e.g., Lehigh County">
+        </div>
+        <div class="form-group">
+            <label for="market_name">Market Name:</label>
+            <input type="text" id="market_name" name="market_name" placeholder="e.g., Philadelphia">
+        </div>
+        <div class="form-group">
+            <label for="status">Status:</label>
+            <select id="status" name="status">
+                <option value="">All</option>
+                <option value="Operational">Operational</option>
+                <option value="Turned Off">Turned Off</option>
+                <option value="Removed">Removed</option>
+                <option value="Never Existed">Never Existed</option>
+            </select>
+        </div>
+        <div class="buttons">
+            <button type="submit">Search</button>
+            <button type="button" id="resetButton">Reset</button>
+        </div>
+    </form>
+
+    <div id="map"></div>
+
+    <footer>
+        Special thanks to Brian Walczak (@briannw) in the Redbox Tinkering Discord for the geocoding of the kiosk locations.
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        const searchForm = document.getElementById('searchForm');
+        const resetButton = document.getElementById('resetButton');
+        const map = L.map('map').setView([37.7749, -122.4194], 5); // Default to the US
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Create a marker cluster group
+        const markers = L.markerClusterGroup();
+
+        // Fetch and display stores on the map
+        async function fetchAndDisplayStores() {
+            const params = new URLSearchParams({
+                state: document.getElementById('state').value.trim(),
+                city: document.getElementById('city').value.trim(),
+                county: document.getElementById('county').value.trim(),
+                market_name: document.getElementById('market_name').value.trim(),
+                status: document.getElementById('status').value.trim()
+            });
+
+            try {
+                // Clear existing markers
+                markers.clearLayers();
+                map.removeLayer(markers); // Remove cluster group from the map
+
+                const response = await fetch(`/search?${params.toString()}`);
+                const stores = await response.json();
+
+                if (stores.length === 0) {
+                    alert('No stores found for the selected filters.');
+                    return;
+                }
+
+                stores.forEach((store) => {
+                    if (store.lat && store.lon) {
+                        const marker = L.marker([store.lat, store.lon])
+                            .bindPopup(`
+                                <b>${store.banner_name || 'Unknown Store'}</b><br>
+                                Address: ${store.address}<br>
+                                Status: ${store.status}<br>
+                                <a href="https://www.google.com/maps?q=${store.lat},${store.lon}" target="_blank">View on Google Maps</a>
+                            `);
+                        markers.addLayer(marker);
+                    }
+                });
+
+                map.addLayer(markers); // Add the updated cluster group to the map
+
+                // Zoom to the first store location if available
+                const firstStore = stores.find(store => store.lat && store.lon);
+                if (firstStore) {
+                    map.setView([firstStore.lat, firstStore.lon], 10);
+                } else {
+                    // Reset to the default map view if no stores are available
+                    map.setView([37.7749, -122.4194], 5);
+                }
+            } catch (err) {
+                console.error('Error fetching stores:', err);
+                alert('Error fetching stores. Please try again later.');
+            }
+        }
+
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            fetchAndDisplayStores();
+        });
+
+        // Reset filters and reload map
+        resetButton.addEventListener('click', () => {
+            // Clear all input fields
+            document.getElementById('state').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('county').value = '';
+            document.getElementById('market_name').value = '';
+            document.getElementById('status').value = '';
+
+            // Reset map to default view
+            markers.clearLayers(); // Clear existing markers
+            map.removeLayer(markers); // Remove cluster group from the map
+            map.setView([37.7749, -122.4194], 5); // Reset to default map view
+
+            fetchAndDisplayStores(); // Reload with default data
+        });
+
+        // Load initial data
+        fetchAndDisplayStores();
+    </script>
+</body>
+
+</html>
