@@ -19,18 +19,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Create a MySQL connection pool
 //Note database schema will not be posted on github but available at my descrition upon request.
 const db = mysql.createPool({
-    host: 'ip',
+    host: 'host',
     user: 'user',
-    password: 'password',
-    database: 'table',
+    password: 'pass',
+    database: 'pass',
     port: 3307
 }).promise();
 
 // Backup directory and configuration
 const BACKUP_DIR = path.join(__dirname, 'backups');
-const DB_NAME = 'table';
-const DB_USER = 'user';
-const DB_PASS = 'password';
+const DB_NAME = 'user';
+const DB_USER = 'pass';
+const DB_PASS = 'pass';
 const MAX_BACKUPS = 10;
 
 // Ensure the backup directory exists
@@ -68,7 +68,7 @@ cron.schedule('0 0 * * *', backupDatabase);
 
 // Existing routes (unchanged)
 app.get('/search', async (req, res) => {
-    const { state, city, county, market_name, status } = req.query;
+    const { state, city, county, market_name, status, id} = req.query;
 
     let whereClause = [];
     let values = [];
@@ -94,6 +94,11 @@ app.get('/search', async (req, res) => {
         values.push(status);
     }
 
+    if (id) {
+        whereClause.push('banner_id = ?');
+        values.push(id);
+    }
+
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
@@ -111,6 +116,8 @@ app.get('/search', async (req, res) => {
             FROM stores
             ${where};
         `;
+        console.log(query);
+        console.log(values);
         const [rows] = await db.query(query, values);
         res.json(rows);
     } catch (err) {
